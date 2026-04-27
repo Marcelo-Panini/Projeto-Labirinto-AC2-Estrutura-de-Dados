@@ -3,6 +3,12 @@
 
 #define MAX 40  //Define o Tamanho Máximo da Matriz
 
+//struct para os itens da mochila
+typedef struct No{
+    int valor; //valor do tesouro
+    struct No *prox; //ponteiro para próximo elemento da lista
+}No;
+
 //Struct q agrupa os dados do labirinto
 typedef struct{
     char mapa [MAX][MAX]; //matriz onde é armazenado dados como as paredes, armadilhas e tesouros
@@ -47,8 +53,18 @@ void carregaLabirinto(Labirinto *l, const char *nomeArquivo){
     fclose(arquivo);
 }
 
+//função para guardar item na mochila
+void guardaMochila(No **topo; int valorNovo){
+
+    //aloca memoria para o novo no
+    No  *novo = (No*) malloc(sizeof(No));
+    novo->valor = valorNovo;
+    novo->prox = NULL;
+}
+
 int main() {
     Labirinto labi; //cria a struct
+    No mochila = NULL; //inicia a mochila vazia
 
     carregaLabirinto(&labi, "labirinto.txt"); //carrega a função carregaLabirinto na main
 
