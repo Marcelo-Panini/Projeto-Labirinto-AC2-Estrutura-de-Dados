@@ -9,6 +9,13 @@ typedef struct No{
     struct No *prox; //ponteiro para próximo elemento da lista
 }No;
 
+//struct para cada passo da trilha
+typedef struct Caminho{
+    int x; //local na linha
+    int y; //local na coluna
+    struct Caminho *prox; //local aterior
+}Caminho;
+
 //Struct q agrupa os dados do labirinto
 typedef struct{
     char mapa [MAX][MAX]; //matriz onde é armazenado dados como as paredes, armadilhas e tesouros
@@ -19,21 +26,21 @@ typedef struct{
 
 //função que le o arquivo .txt e carrega o mapa.
 void carregaLabirinto(Labirinto *l, const char *nomeArquivo){
-
+    
     FILE *arquivo = fopen(nomeArquivo, "r"); //abre o arquivo para a leitura
 
     if(arquivo == NULL){ //tratamento de erro no caso do arquivo não existir ou n poder ser aberto
         printf("Erro ao abrir arquivo %s\n", nomeArquivo); //mensagem do erro
         exit(1);
     }
-
+    
         //le a primeira linha do arquivo .txt para configurar as dimensões do mapa
-        fscanf(arquivo, "%dx%d\n", &l->linhas, &l->colunas);
+        fscanf(arquivo, "%dx%d\n", &l->linhas, &l->colunas); 
 
         //loop que percorre cada linha do labirinto
         for(int i = 0; i < l->linhas; i++){
             fgets(l->mapa[i], MAX + 2, arquivo); //le toda a linha preservando espaços vazios que são os corredores
-
+        
         //loop que analisa cada coluna da linha
         for(int j = 0; j < l->colunas; j++){
 
@@ -46,7 +53,7 @@ void carregaLabirinto(Labirinto *l, const char *nomeArquivo){
             //remove quebra de linhas para não danificar a exibição visual
             if(l->mapa[i][j] == '\n' || l->mapa[i][j] == '\r'){
                 l->mapa[i][j] = '\0';
-            }
+            } 
         }
     }
 
@@ -56,7 +63,7 @@ void carregaLabirinto(Labirinto *l, const char *nomeArquivo){
 //função para guardar item na mochila
 void guardaMochila(No **topo, int valorNovo){
 
-    //alocação dinamica na memoria para novo tesouro
+    //alocação dinamica na memoria para novo tesouro        
     No  *novo = (No*) malloc(sizeof(No));
     novo->valor = valorNovo;
     novo->prox = NULL;
@@ -95,11 +102,53 @@ void imprimeMochila(No *topo){
     printf("\n");
 }
 
+//função para remover o primeiro item da mochila
+void retiraTesouro(No **topo){
+
+    //verifica se a mochila esta vazia
+    if(*topo == NULL){
+        printf("A mochila esta vazia!\n");
+        return;
+    }
+
+    //ponteiro temporario para armazenar o item que vai ser removido
+    No *temp = *topo;
+    *topo = (*topo)->prox; //topo aponta para o proximo item
+    free(temp); //libera a memoria do item removido
+
+    printf("Voce perdeu um tesouro!\n");
+}
+
+void salvaCaminho(Caminho **topo, int x, int y){
+    Caminho *novo = (Caminho*) malloc(sizeof(Caminho));
+    if(novo == NULL) 
+    exit(1);
+
+    novo->x = x;
+    novo->y = y;
+    novo->prox = *topo;
+    *topo = novo;
+}
+
+void voltaCaminho(Caminho **topo, int *x, int *y){
+    if(*topo == NULL){
+        return;
+    }
+
+    Caminho *temp = *topo;
+    *x = temp->x;
+    *y = temp->y;
+    *topo = (*topo)->prox;
+    free(temp);
+}
+
 int main() {
     Labirinto labi; //cria a struct
-    No mochila = NULL; //inicia a mochila vazia
+    No *mochila = NULL; //inicia a mochila vazia
+    Caminho *trilha = NULL;
 
     carregaLabirinto(&labi, "labirinto.txt"); //carrega a função carregaLabirinto na main
+    imprimeMochila(mochila);
 
     printf("Posicao Inicial do Personagem: %d, %d\n", labi.ppx, labi.ppy);
 
@@ -108,6 +157,6 @@ int main() {
         printf("%s\n", labi.mapa[i]);
     }
 
-    return 0;
-}
+    return 0; 
 
+}
