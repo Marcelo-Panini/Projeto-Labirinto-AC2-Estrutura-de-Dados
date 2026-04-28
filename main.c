@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define MAX 40  //Define o Tamanho Máximo da Matriz
 
@@ -91,7 +92,7 @@ void guardaMochila(No **topo, int valorNovo){
 
 //função que mostra a mochila
 void imprimeMochila(No *topo){
-    printf("Moxhila: ");
+    printf("Mochila: ");
     No *atual = topo;
 
     //percorre toda a lista até o fim
@@ -119,38 +120,126 @@ void retiraTesouro(No **topo){
     printf("Voce perdeu um tesouro!\n");
 }
 
+//função que registra os passos no labirinto
 void salvaCaminho(Caminho **topo, int x, int y){
+    //aloca memoria para armazenar o local atual
     Caminho *novo = (Caminho*) malloc(sizeof(Caminho));
     if(novo == NULL) 
     exit(1);
 
+    //dados das cordenadas na linha e coluna
     novo->x = x;
     novo->y = y;
     novo->prox = *topo;
     *topo = novo;
 }
 
+//função de pop que recupera o passo anterior
 void voltaCaminho(Caminho **topo, int *x, int *y){
     if(*topo == NULL){
         return;
     }
 
-    Caminho *temp = *topo;
+    Caminho *temp = *topo; //ponteiro temporario para n oerder o no
+   
+    //devolve os valores para as suas variaveis
     *x = temp->x;
     *y = temp->y;
     *topo = (*topo)->prox;
-    free(temp);
+    free(temp); //libera a memoria
+}
+
+//função que verifica se o caminho esta livre para andar
+int caminhoLivre(Labirinto *l, int x, int y){
+
+    //verifica se esta nos limites da matriz
+    if(x < 0 || x >= l->linhas || y < 0 || y >= l->colunas){
+        return 0;
+    }
+
+    //verifica se não é uma parede ou um lugar que já passou
+    if(l->mapa[x][y] == '#' || l->mapa[x][y] == '.'){
+        return 0;
+    }
+
+    return 1; //caminho livre
+}
+
+void exploracaoLabi(Labirinto *l, No **mochila, Caminho **trilha){
+    int x = l->ppx;
+    int y = l->ppy;
+    int saida = 0;
+
+    printf("\n--Labirinto--\n");
+
+    while(!saida){
+        char sAtual = l->mapa[x][y];
+
+        if(sAtual == 'T'){
+            int valor = (rand() % 100) + 1;
+            guardaMochila(mochila, valor);
+            printf("\nEnconrou um Tesouro! \n Valor: %i\n", valor);
+        }
+
+        else if(sAtual == 'A'){
+            retiraTesouro(mochila);
+        }
+
+        else if(sAtual == 'S'){
+            printf("\nEncontrou a Saída!");
+            saida = 1;
+            break;
+        }
+
+        l->mapa[x][y] = '.';
+
+        if(caminhoLivre(l, x, y + 1)){
+            salvaCaminho(trilha, x, y);
+            y++;
+        }
+
+        else if (caminhoLivre(l, x + 1, y)) {
+            salvaCaminho(trilha, x, y);
+            x++;
+        } 
+
+        else if (caminhoLivre(l, x, y - 1)) {
+            salvaCaminho(trilha, x, y);
+            y--;
+        } 
+
+        else if (caminhoLivre(l, x - 1, y)) {
+            salvaCaminho(trilha, x, y);
+            x--;
+        }
+
+        else{
+            if(*trilha == NULL){
+                printf("\nCaminho sem Saída\n");
+                break;
+            }
+
+            voltaCaminho(trilha, &x, &y);
+            printf("Beco sem saida! Retornando\n");
+        }
+    }
 }
 
 int main() {
+
+    srand(time(NULL));
+
     Labirinto labi; //cria a struct
     No *mochila = NULL; //inicia a mochila vazia
     Caminho *trilha = NULL;
 
     carregaLabirinto(&labi, "labirinto.txt"); //carrega a função carregaLabirinto na main
+    exploracaoLabi(&labi, &mochila, &trilha);
+
+    printf("\n--Resultado--\n");
+
     imprimeMochila(mochila);
 
-    printf("Posicao Inicial do Personagem: %d, %d\n", labi.ppx, labi.ppy);
 
     //loop que imprime o mapa carregado na tela
     for (int i = 0; i < labi.linhas; i++) {
