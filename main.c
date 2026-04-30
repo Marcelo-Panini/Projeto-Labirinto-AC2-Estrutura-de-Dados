@@ -29,7 +29,7 @@ typedef struct{
 //função que le o arquivo .txt e carrega o mapa.
 void carregaLabirinto(Labirinto *l, const char *nomeArquivo) {
     FILE *arquivo = fopen(nomeArquivo, "r"); //abre o arquivo em mode de leitura
-    
+
     //se o arquivo não existir retorna a mensagem de nao encontrado
     if (!arquivo) {
         printf("Arquivo nao encontrado!\n");
@@ -185,14 +185,14 @@ void exploracaoLabi(Labirinto *l, No **mochila, Caminho **trilha){
     int saida = 0;
 
     while(!saida){
-        
+
         //limpa o console a cada iteração e desenha o mapa novamente
         system("cls");
         for (int i = 0; i < l->linhas; i++) {
             for (int j = 0; j < l->colunas; j++) {
                 // Se a posição do loop for a posição atual do jogador desenha o P
                 if (i == x && j == y) {
-                    printf("P"); 
+                    printf("P");
                 } else {
                     printf("%c", l->mapa[(i * l->colunas) + j]);
                 }
@@ -247,9 +247,9 @@ void exploracaoLabi(Labirinto *l, No **mochila, Caminho **trilha){
                 Sleep(2000);
                 break;
             }
-            
+
             printf("\n[!] Beco sem saida em (%d, %d)! Retornando...\n", x, y);
-            Sleep(800); 
+            Sleep(400);
 
             voltaCaminho(trilha, &x, &y); //desempilha  a coordenada anterior
         }
@@ -260,32 +260,48 @@ void exploracaoLabi(Labirinto *l, No **mochila, Caminho **trilha){
 
 //funcao para calcular os valores dos tesouros
 int calculaTesouros(No *topo){
-    int total = 0;
-    No *atual = topo;
+    int total = 0; //variavel que acumula para o valor total
+    No *atual = topo; //ponteiro para percorrer a lista sem perder a referencia
 
+    // Enquanto o ponteiro não atingir o fim da lista (NULL)
     while(atual != NULL){
-        total += atual->valor;
-        atual = atual->prox;
+        total += atual->valor; //soma o valor do nó atual ao total acumulado
+        atual = atual->prox; //ponteiro atual aponta para o proximo no
     }
 
-    return total;
+    return total; //retorna a soma final
 }
 
 //funcao para gravar a solucao do labi em outro arquivo
-void gravaCaminhoArquivo(Caminho *topo, const char *nomeArquivo) {
-    FILE *arquivo = fopen(nomeArquivo, "w");
-    if (!arquivo) return;
+void gravaCaminhoArquivo(Labirinto l, Caminho *topo, const char *nomeArquivo) {
+    FILE *arquivo = fopen(nomeArquivo, "w"); //abre o arquivo para escrita
+    if (!arquivo) return; //tratamento de erro
 
-    fprintf(arquivo, "Caminho percorrido (Coordenadas X, Y):\n");
-    
-    Caminho *atual = topo;
+    fprintf(arquivo, "--- COORDENADAS DO CAMINHO (FIM PARA INICIO) ---\n");
+    Caminho *atual = topo; //ponteiro aux para percorrer a trilha
+
     while (atual != NULL) {
+        //grava as coordenadas de cada passo
         fprintf(arquivo, "[%d, %d]\n", atual->x, atual->y);
-        atual = atual->prox;
+
+        //substitui o caractere pelo símbolo '*' mostrando o trajeto final desenhado no arquivo
+        l.mapa[(atual->x * l.colunas) + atual->y] = '*';
+
+        atual = atual->prox; //avanca para o prox no
     }
 
-    fclose(arquivo);
-    printf("\nCaminho gravado com sucesso em '%s'!\n", nomeArquivo);
+
+    fprintf(arquivo, "\n--- MAPA DA SOLUCAO (* = Caminho) ---\n");
+    for (int i = 0; i < l.linhas; i++) {
+        for (int j = 0; j < l.colunas; j++) {
+            //faz o desenho do mapa no arquivo
+            fprintf(arquivo, "%c", l.mapa[(i * l.colunas) + j]);
+        }
+        fprintf(arquivo, "\n"); //quebra de linha após completar uma linha de colunas
+    }
+
+    fclose(arquivo); //frcha e salva o arquivo
+    printf("\nSolucao visual e coordenadas gravadas em '%s'!\n", nomeArquivo);
 }
 
 int main() {
@@ -314,7 +330,7 @@ int main() {
         printf("\n");
     }
 
-    gravaCaminhoArquivo(trilha, "caminho_saida.txt");
+    gravaCaminhoArquivo(labi, trilha, "caminho_saida.txt");
 
     return 0;
 
